@@ -62,7 +62,7 @@ coloque esse comando em um arquivo .sh e dê as permissões:
     # Variaveis
     NOME="bia-dev"
     Descricao="acesso ao bia-dev"
-    VPC="vpc-0ff61e8578eee23a5"
+    VPC="SEU VPC ID AQUI"
     
     # Criando o SG
     ID=$(aws ec2 create-security-group --group-name $NOME --description "$Descricao" --vpc-id $VPC --query 'GroupId' --output text)
