@@ -135,5 +135,34 @@ Fornece um script de inicialização (user_data) a ser executado quando a instâ
 é bom guardar pq pode ser utilizado de outra forma (só alterar algumas coisas) aqui ele já vai criar a instância colocar ela na VPC certa, no SG (SECURITY GROUP) certo e na subnet certa
 e também ele já vai associar a role para conseguir acesso SSM.
 
+# Docker e os Containers
+
+No Docker, containers e imagens são dois conceitos fundamentais que facilitam o desenvolvimento, distribuição e execução de aplicações de maneira consistente e isolada. Aqui está uma explicação resumida de cada um:
+
+**Imagens**
+
+Definição: Uma imagem Docker é um pacote leve, autossuficiente e imutável que contém tudo o que é necessário para executar uma aplicação: código, runtime, bibliotecas, variáveis de ambiente e configurações.
+
+Funcionamento: As imagens são construídas a partir de um arquivo chamado Dockerfile, que contém uma série de instruções para configurar o ambiente da aplicação.
+
+
+Reutilização: Uma imagem pode ser usada para criar múltiplos containers. Imagens são armazenadas em repositórios, como o Docker Hub, onde podem ser compartilhadas e distribuídas.
+
+**Containers**
+
+Definição: Um container é uma instância executável de uma imagem Docker. Ele encapsula a aplicação e suas dependências em um ambiente isolado, garantindo que ela rode de maneira consistente, independentemente do ambiente em que está sendo executada.
+
+Funcionamento: Containers são iniciados a partir de imagens e podem ser parados, reiniciados e destruídos sem afetar o sistema host. Eles compartilham o kernel do sistema operacional host, mas operam de maneira isolada.
+
+Escalabilidade: Containers são leves e rápidos de iniciar, o que os torna ideais para escalabilidade e deployment em larga escala.
+
+**Resumo**
+
+Imagens: Templates ou moldes para containers; contêm tudo que a aplicação precisa para rodar.
+
+Containers: Instâncias em execução das imagens; executam a aplicação em um ambiente isolado e consistente.
+
+
+
 
 
