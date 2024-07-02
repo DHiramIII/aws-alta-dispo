@@ -14,7 +14,7 @@ essa é como a aplicação fica ela será "rodada" em um container dentro de uma
 
 A criação da role é importante para que as permissões sejam dadas para a Instância conseguir realizar as suas atividades ela pode ser feita tanto pela console e pela AWS CloudShell segue o script que será
 executado como .sh:
-
+```bash
     role_name="role-acesso-ssm"
     policy_name="AmazonSSMManagedInstanceCore"
     
@@ -46,7 +46,7 @@ executado como .sh:
         "Action": "sts:AssumeRole"
       }]
     }
-
+```
 este é o script em json da role o ideal é criar um arquivo dentro do cloud shell para esse do json em formato json e o da role em .sh
 porém apenas a role "AmazonSSMManagedInstanceCore" não será o suficiente também deve ser colocada as que estão na imagem abaixo:
 
@@ -57,6 +57,7 @@ porém apenas a role "AmazonSSMManagedInstanceCore" não será o suficiente tamb
 Esse passo pode tanto ser feito no cloudshell ou na console segue o script para criar um SG com as seguintes regras de entrada, 
 coloque esse comando em um arquivo .sh e dê as permissões:
 
+```bash
     #!/bin/bash
     
     # Variaveis
@@ -73,12 +74,13 @@ coloque esse comando em um arquivo .sh e dê as permissões:
 
     
     echo "Security Group Created"
+```
 
 # Criação da Instância
 
 Subir uma instâcia na AWS pode ser feito tanto pelo AWS CloudShell ou pela console o script para criar a instância dessa aplicação em específico é esse:
 
-
+```bash
     vpc_id=$(aws ec2 describe-vpcs --filters Name=isDefault,Values=true --query "Vpcs[0].VpcId" --output text)
     subnet_id=$(aws ec2 describe-subnets --filters Name=vpc-id,Values=$vpc_id Name=availabilityZone,Values=us-east-1a --query "Subnets[0].SubnetId" --output text)
     security_group_id=$(aws ec2 describe-security-groups --group-names "bia-dev" --query "SecurityGroups[0].GroupId" --output text 2>/dev/null)
@@ -93,44 +95,44 @@ Subir uma instâcia na AWS pode ser feito tanto pelo AWS CloudShell ou pela cons
     --block-device-mappings '[{"DeviceName":"/dev/xvda","Ebs":{"VolumeSize":15,"VolumeType":"gp2"}}]' \
     --tag-specifications 'ResourceType=instance,Tags=[{Key=Name,Value=bia-dev}]' \
     --iam-instance-profile Name=role-acesso-ssm --user-data file://user_data_ec2_zona_a.sh
-
+```
 CONTEÚDO DO ARQUIVO "user_data_ec2_zona_a.sh" (crie ele com o comando nano "nome-do-arquivo.sh" e salve no CloudShell
 
 Fornece um script de inicialização (user_data) a ser executado quando a instância é iniciada. O conteúdo do script user_data_ec2_zona_a.sh será executado na inicialização da instância.
 
-    #!/bin/bash
+```bash
+#!/bin/bash
     
-    #Instalar Docker e Git
-    sudo yum update -y
-    sudo yum install git -y
-    sudo yum install docker -y
-    sudo usermod -a -G docker ec2-user
-    sudo usermod -a -G docker ssm-user
-    id ec2-user ssm-user
-    sudo newgrp docker
+#Instalar Docker e Git
+sudo yum update -y
+sudo yum install git -y
+sudo yum install docker -y
+sudo usermod -a -G docker ec2-user
+sudo usermod -a -G docker ssm-user id ec2-user ssm-user
+sudo newgrp docker
     
-    #Ativar docker
-    sudo systemctl enable docker.service
-    sudo systemctl start docker.service
-    
-    #Instalar docker compose 2
-    sudo mkdir -p /usr/local/lib/docker/cli-plugins
-    sudo curl -SL https://github.com/docker/compose/releases/download/v2.23.3/docker-compose-linux-x86_64 -o /usr/local/lib/docker/cli-plugins/docker-compose
-    sudo chmod +x /usr/local/lib/docker/cli-plugins/docker-compose
-    
-    
-    #Adicionar swap
-    sudo dd if=/dev/zero of=/swapfile bs=128M count=32
-    sudo chmod 600 /swapfile
-    sudo mkswap /swapfile
-    sudo swapon /swapfile
-    sudo echo "/swapfile swap swap defaults 0 0" >> /etc/fstab
+#Ativar docker
+sudo systemctl enable docker.service
+sudo systemctl start docker.service
+
+#Instalar docker compose 2
+sudo mkdir -p /usr/local/lib/docker/cli-plugins
+sudo curl -SL https://github.com/docker/compose/releases/download/v2.23.3/docker-compose-linux-x86_64 -o /usr/local/lib/docker/cli-plugins/docker-compose
+sudo chmod +x /usr/local/lib/docker/cli-plugins/docker-compose
     
     
-    #Instalar node e npm
-    curl -fsSL https://rpm.nodesource.com/setup_21.x | sudo bash -
-    sudo yum install -y nodejs
+#Adicionar swap
+sudo dd if=/dev/zero of=/swapfile bs=128M count=32
+sudo chmod 600 /swapfile
+sudo mkswap /swapfile
+sudo swapon /swapfile
+sudo echo "/swapfile swap swap defaults 0 0" >> /etc/fstab
     
+    
+#Instalar node e npm
+curl -fsSL https://rpm.nodesource.com/setup_21.x | sudo bash -
+sudo yum install -y nodejs    
+```    
 
 é bom guardar pq pode ser utilizado de outra forma (só alterar algumas coisas) aqui ele já vai criar a instância colocar ela na VPC certa, no SG (SECURITY GROUP) certo e na subnet certa
 e também ele já vai associar a role para conseguir acesso SSM.
@@ -162,7 +164,34 @@ Imagens: Templates ou moldes para containers; contêm tudo que a aplicação pre
 
 Containers: Instâncias em execução das imagens; executam a aplicação em um ambiente isolado e consistente.
 
+# DockerFile
 
+Normalmente já existem imagens criadas como a do Nginx a do Apache e também do Ubuntu entre várias outras porém algumas imagens, na nossa imagem em específico iremos utilizar o DockerFile para realizar o build dela, para cada aplicação será uma imagem, no caso dessa aqui o código do DockerFile será o seguinte:
+
+```bash
+    FROM node:21-slim
+    
+    RUN npm install -g npm@latest --loglevel=error
+    WORKDIR /usr/src/app
+    
+    COPY package*.json ./
+    
+    RUN npm install --loglevel=error
+    
+    COPY . .
+    
+    RUN REACT_APP_API_URL=http://34.239.240.133 SKIP_PREFLIGHT_CHECK=true npm run build --prefix client
+    
+    RUN mv client/build build
+    
+    RUN rm  -rf client/*
+    
+    RUN mv build client/
+    
+    EXPOSE 8080
+    
+    CMD [ "npm", "start" ]   
+```
 
 
 
